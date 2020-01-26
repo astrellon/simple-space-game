@@ -1,5 +1,6 @@
 import WebGLCanvas from "./webglCanvas";
 import GameObject from "./gameObject";
+import { mat4 } from "gl-matrix";
 
 export default class GameEngine
 {
@@ -31,7 +32,9 @@ export default class GameEngine
     {
         this.webgl.setupRender();
 
-        this.root.render(this.webgl);
+        const transformStack = [mat4.create()];
+
+        this.root.render(this.webgl, transformStack);
     }
 
     public postRender()
