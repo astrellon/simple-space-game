@@ -1,8 +1,8 @@
-import Matrix4x4 from "./matrix4x4";
+import { mat4 } from "gl-matrix";
 
 export default class WebGLMesh
 {
-    public transform: Matrix4x4;
+    public transform: mat4 = mat4.create();
     public readonly buffer: WebGLBuffer;
     public readonly mode: GLenum;
     public readonly length: number;
@@ -16,6 +16,5 @@ export default class WebGLMesh
         this.length = length;
         this.colour = colour;
         this.pointSize = pointSize;
-        this.transform = new Matrix4x4();
     }
 }

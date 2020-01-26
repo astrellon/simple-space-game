@@ -1,4 +1,5 @@
 import GameEngine from "./gameEngine";
+import { mat4 } from "gl-matrix";
 
 const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement;
 const gameEngine = new GameEngine(mainCanvas);
@@ -19,7 +20,7 @@ function render()
     gameEngine.preRender();
 
     angle += 3 * gameEngine.deltaTime;
-    mesh.transform.rotateZ(angle);
+    mat4.fromZRotation(mesh.transform, angle);
 
     gameEngine.render();
     gameEngine.postRender();
