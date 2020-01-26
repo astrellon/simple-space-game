@@ -1,6 +1,7 @@
 import WebGLMesh from "./webglMesh";
 import { initShaderProgram, createMesh } from "./webglUtils";
 import { mat4 } from "gl-matrix";
+import { WebGLSimpleShader } from "./webglShader";
 
 export interface WebGLViewport
 {
@@ -15,15 +16,9 @@ export default class WebGLCanvas
     public gl: WebGLRenderingContext;
     public viewport: WebGLViewport;
     private canvas: HTMLCanvasElement;
-    private shaderProgram: WebGLProgram;
     private viewMatrix: mat4 = mat4.create();
     private cameraMatrix: mat4 = mat4.create();
-
-    private pointSizeUniform: WebGLUniformLocation;
-    private viewUniform: WebGLUniformLocation;
-    private cameraUniform: WebGLUniformLocation;
-    private modelUniform: WebGLUniformLocation;
-    private fragColourUniform: WebGLUniformLocation;
+    private simpleShader: WebGLSimpleShader;
 
     constructor(canvas: HTMLCanvasElement)
     {
@@ -52,37 +47,27 @@ export default class WebGLCanvas
 
     public init()
     {
-        this.shaderProgram = initShaderProgram(this.gl);
-
-        this.gl.useProgram(this.shaderProgram);
+        const simpleProgram = initShaderProgram(this.gl);
+        this.simpleShader = new WebGLSimpleShader(simpleProgram, this.gl);
+        this.simpleShader.useShader();
 
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.disable(this.gl.CULL_FACE);
 
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
-        this.pointSizeUniform = this.gl.getUniformLocation(this.shaderProgram, 'pointSize');
-        this.cameraUniform = this.gl.getUniformLocation(this.shaderProgram, 'camera');
-        this.viewUniform = this.gl.getUniformLocation(this.shaderProgram, 'view');
-        this.modelUniform = this.gl.getUniformLocation(this.shaderProgram, 'model');
-        this.fragColourUniform = this.gl.getUniformLocation(this.shaderProgram, 'fragColour');
-
         mat4.lookAt(this.viewMatrix, [0, 0, -1], [0, 0, 10], [0, 1, 0]);
         mat4.ortho(this.cameraMatrix, -5, 5, -5, 5, 0.1, 50);
 
-        this.gl.uniformMatrix4fv(this.cameraUniform, false, this.cameraMatrix);
-        this.gl.uniformMatrix4fv(this.viewUniform, false, this.viewMatrix);
-
-        this.gl.bindAttribLocation(this.shaderProgram, 0, 'vertexPos');
-        this.gl.enableVertexAttribArray(0);
+        this.gl.uniformMatrix4fv(this.simpleShader.viewUniform, false, this.viewMatrix);
     }
 
     public drawMesh(mesh: WebGLMesh, worldTransform: mat4)
     {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, mesh.buffer);
         this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
-        //this.gl.uniform4fv(this.fragColourUniform, mesh.colour);
-        this.gl.uniformMatrix4fv(this.modelUniform, false, worldTransform);
+        this.gl.uniform4fv(this.simpleShader.fragColourUniform, mesh.colour);
+        this.gl.uniformMatrix4fv(this.simpleShader.modelUniform, false, worldTransform);
         this.gl.drawArrays(mesh.mode, 0, mesh.length);
     }
 
@@ -96,7 +81,8 @@ export default class WebGLCanvas
     public setupRender()
     {
         const { viewport } = this;
+
         mat4.ortho(this.cameraMatrix, viewport.minX, viewport.maxX, viewport.minY, viewport.maxY, 0.1, 50);
-        this.gl.uniformMatrix4fv(this.cameraUniform, false, this.cameraMatrix);
+        this.gl.uniformMatrix4fv(this.simpleShader.cameraUniform, false, this.cameraMatrix);
     }
 }

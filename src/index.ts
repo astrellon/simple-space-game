@@ -17,9 +17,9 @@ const obj = new GameObject();
 obj.mesh = gameEngine.webgl.createMesh(meshData, [1, 0, 0, 1]);
 obj.setParent(gameEngine.root);
 
-for (let i = 0; i < 1000; i++)
+for (let i = 0; i < 10; i++)
 {
-    const objChild = new Square(gameEngine, [0, 1, 0, 1], i / 1000 * Math.PI * 2);
+    const objChild = new Square(gameEngine, [0, 1, 0, 1], i / 10 * Math.PI * 2);
     objChild.setParent(obj);
 }
 

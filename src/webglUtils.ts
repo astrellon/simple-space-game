@@ -1,10 +1,18 @@
-import WebGLMesh from "./webglMesh";
-
 export const DefaultVertexShader = `attribute vec4 vertexPos;
 
 uniform mat4 view;
 uniform mat4 camera;
 uniform mat4 model;
+
+void main() {
+  gl_Position = camera * view * model * vertexPos;
+}`;
+
+export const DefaultVertexInstanceShader = `attribute vec4 vertexPos;
+
+uniform mat4 view;
+uniform mat4 camera;
+attribute mat4 model;
 
 void main() {
   gl_Position = camera * view * model * vertexPos;
