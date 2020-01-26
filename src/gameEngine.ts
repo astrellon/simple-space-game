@@ -1,10 +1,13 @@
 import WebGLCanvas from "./webglCanvas";
+import GameObject from "./gameObject";
 
 export default class GameEngine
 {
     public readonly webgl: WebGLCanvas;
     public nowTime: number = 0;
     public deltaTime: number = 0;
+
+    public root: GameObject = new GameObject();
 
     private prevTime: number = 0;
 
@@ -26,7 +29,9 @@ export default class GameEngine
 
     public render()
     {
-        this.webgl.render();
+        this.webgl.setupRender();
+
+        this.root.render(this.webgl);
     }
 
     public postRender()

@@ -25,8 +25,6 @@ export default class WebGLCanvas
     private modelUniform: WebGLUniformLocation;
     private fragColourUniform: WebGLUniformLocation;
 
-    private meshes: WebGLMesh[] = [];
-
     constructor(canvas: HTMLCanvasElement)
     {
         this.canvas = canvas;
@@ -93,19 +91,13 @@ export default class WebGLCanvas
     {
         const buffer = createMesh(this.gl, data);
         const mesh = new WebGLMesh(buffer, this.gl.TRIANGLE_STRIP, data.length / 2, colour, 1);
-        this.meshes.push(mesh);
         return mesh;
     }
 
-    public render()
+    public setupRender()
     {
         const { viewport } = this;
         mat4.ortho(this.cameraMatrix, viewport.minX, viewport.maxX, viewport.minY, viewport.maxY, 0.1, 50);
         this.gl.uniformMatrix4fv(this.cameraUniform, false, this.cameraMatrix);
-
-        for (let mesh of this.meshes)
-        {
-            this.drawMesh(mesh);
-        }
     }
 }
