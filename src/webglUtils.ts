@@ -5,11 +5,9 @@ export const DefaultVertexShader = `attribute vec4 vertexPos;
 uniform mat4 view;
 uniform mat4 camera;
 uniform mat4 model;
-uniform float pointSize;
 
 void main() {
   gl_Position = camera * view * model * vertexPos;
-  gl_PointSize = pointSize;
 }`;
 
 export const DefaultFragShader = `

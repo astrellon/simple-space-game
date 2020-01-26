@@ -11,6 +11,7 @@ export default class GameEngine
     public root: GameObject = new GameObject();
 
     private prevTime: number = 0;
+    private identityMatrix: mat4 = mat4.create();
 
     constructor(canvas: HTMLCanvasElement)
     {
@@ -26,13 +27,15 @@ export default class GameEngine
         {
             this.deltaTime = (this.nowTime - this.prevTime) / 1000;
         }
+
+        this.root.update(this);
     }
 
     public render()
     {
         this.webgl.setupRender();
 
-        const transformStack = [mat4.create()];
+        const transformStack = [this.identityMatrix];
 
         this.root.render(this.webgl, transformStack);
     }

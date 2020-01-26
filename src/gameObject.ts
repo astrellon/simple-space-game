@@ -2,6 +2,7 @@ import { remove } from "./utils";
 import { mat4 } from "gl-matrix";
 import WebGLMesh from "./webglMesh";
 import WebGLCanvas from "./webglCanvas";
+import GameEngine from "./gameEngine";
 
 export default class GameObject
 {
@@ -25,6 +26,16 @@ export default class GameObject
         }
     }
 
+    public update(engine: GameEngine)
+    {
+        this.doUpdate(engine);
+
+        for (let child of this.children)
+        {
+            child.update(engine);
+        }
+    }
+
     public render(webgl: WebGLCanvas, transformStack: mat4[])
     {
         let worldTransform = transformStack[transformStack.length - 1];
@@ -45,5 +56,10 @@ export default class GameObject
         }
 
         transformStack.pop();
+    }
+
+    protected doUpdate(engine: GameEngine)
+    {
+
     }
 }

@@ -81,8 +81,7 @@ export default class WebGLCanvas
     {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, mesh.buffer);
         this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
-        this.gl.uniform1f(this.pointSizeUniform, mesh.pointSize);
-        this.gl.uniform4fv(this.fragColourUniform, mesh.colour);
+        //this.gl.uniform4fv(this.fragColourUniform, mesh.colour);
         this.gl.uniformMatrix4fv(this.modelUniform, false, worldTransform);
         this.gl.drawArrays(mesh.mode, 0, mesh.length);
     }
