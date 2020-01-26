@@ -79,19 +79,15 @@ export default class WebGLCanvas
         this.gl.enableVertexAttribArray(0);
     }
 
-    public changePointSize(pointSize: number)
+    public drawMesh(mesh: WebGLMesh)
     {
-        this.gl.uniform1f(this.pointSizeUniform, pointSize);
-    }
-
-    public changeColour(colour: number[])
-    {
-        this.gl.uniform4fv(this.fragColourUniform, colour);
-    }
-
-    public changeModelTransform(model: Float32Array)
-    {
-        this.gl.uniformMatrix4fv(this.modelUniform, false, model);
+        this.boundMesh = mesh;
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, mesh.buffer);
+        this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
+        this.gl.uniform1f(this.pointSizeUniform, mesh.pointSize);
+        this.gl.uniform4fv(this.fragColourUniform, mesh.colour);
+        this.gl.uniformMatrix4fv(this.modelUniform, false, mesh.transform.data);
+        this.gl.drawArrays(mesh.mode, 0, mesh.length);
     }
 
     public createMesh(data: Float32Array, colour: number[])
@@ -110,7 +106,7 @@ export default class WebGLCanvas
 
         for (let mesh of this.meshes)
         {
-            mesh.render(this);
+            this.drawMesh(mesh);
         }
     }
 }
