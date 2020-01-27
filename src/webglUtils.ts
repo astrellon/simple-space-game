@@ -9,13 +9,14 @@ void main() {
 }`;
 
 export const DefaultVertexInstanceShader = `attribute vec4 vertexPos;
+attribute vec4 offset;
 
 uniform mat4 view;
 uniform mat4 camera;
-attribute mat4 model;
+uniform mat4 model;
 
 void main() {
-  gl_Position = camera * view * model * vertexPos;
+  gl_Position = camera * view * model * (vertexPos + offset);
 }`;
 
 export const DefaultFragShader = `

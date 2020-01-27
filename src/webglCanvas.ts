@@ -1,7 +1,8 @@
 import WebGLMesh from "./webglMesh";
-import { initShaderProgram, createMesh } from "./webglUtils";
+import { initShaderProgram, createMesh, DefaultVertexInstanceShader } from "./webglUtils";
 import { mat4 } from "gl-matrix";
-import { WebGLSimpleShader } from "./webglShader";
+import WebGLMeshInstances from "./webglMeshInstances";
+import ShaderWrapper from "./shaderWrapper";
 
 export interface WebGLViewport
 {
@@ -18,7 +19,11 @@ export default class WebGLCanvas
     private canvas: HTMLCanvasElement;
     private viewMatrix: mat4 = mat4.create();
     private cameraMatrix: mat4 = mat4.create();
-    private simpleShader: WebGLSimpleShader;
+    private simpleShader: ShaderWrapper;
+    private instanceShader: ShaderWrapper;
+    private instanceExtension: ANGLE_instanced_arrays;
+
+    private currentShader: ShaderWrapper = null;
 
     constructor(canvas: HTMLCanvasElement)
     {
@@ -48,8 +53,12 @@ export default class WebGLCanvas
     public init()
     {
         const simpleProgram = initShaderProgram(this.gl);
-        this.simpleShader = new WebGLSimpleShader(simpleProgram, this.gl);
-        this.simpleShader.useShader();
+        this.simpleShader = new ShaderWrapper(this.gl, simpleProgram);
+
+        const instanceProgram = initShaderProgram(this.gl, DefaultVertexInstanceShader);
+        this.instanceShader = new ShaderWrapper(this.gl, instanceProgram);
+
+        this.instanceExtension = this.gl.getExtension('ANGLE_instanced_arrays');
 
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.disable(this.gl.CULL_FACE);
@@ -58,24 +67,55 @@ export default class WebGLCanvas
 
         mat4.lookAt(this.viewMatrix, [0, 0, -1], [0, 0, 10], [0, 1, 0]);
         mat4.ortho(this.cameraMatrix, -5, 5, -5, 5, 0.1, 50);
-
-        this.gl.uniformMatrix4fv(this.simpleShader.viewUniform, false, this.viewMatrix);
     }
 
     public drawMesh(mesh: WebGLMesh, worldTransform: mat4)
     {
+        const shader = this.simpleShader;
+        this.changeToShader(shader);
+
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, mesh.buffer);
-        this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
-        this.gl.uniform4fv(this.simpleShader.fragColourUniform, mesh.colour);
-        this.gl.uniformMatrix4fv(this.simpleShader.modelUniform, false, worldTransform);
+        this.gl.enableVertexAttribArray(shader.attribute.vertexPos);
+        this.gl.vertexAttribPointer(shader.attribute.vertexPos, 2, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.uniform4fv(shader.uniform.fragColour, mesh.colour);
+        this.gl.uniformMatrix4fv(shader.uniform.model, false, worldTransform);
         this.gl.drawArrays(mesh.mode, 0, mesh.length);
+    }
+
+    public drawMeshInstances(meshInstances: WebGLMeshInstances, worldTransform: mat4)
+    {
+        const shader = this.instanceShader;
+        this.changeToShader(shader);
+        const mesh = meshInstances.baseMesh;
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, mesh.buffer);
+        this.gl.enableVertexAttribArray(shader.attribute.vertexPos);
+        this.gl.vertexAttribPointer(shader.attribute.vertexPos, 2, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, meshInstances.offsetBuffer);
+        this.gl.enableVertexAttribArray(shader.attribute.offset);
+        this.gl.vertexAttribPointer(shader.attribute.offset, 2, this.gl.FLOAT, false, 0, 0);
+        this.instanceExtension.vertexAttribDivisorANGLE(shader.attribute.offset, 1);
+
+        this.gl.uniform4fv(shader.uniform.fragColour, mesh.colour);
+        this.gl.uniformMatrix4fv(shader.uniform.model, false, worldTransform);
+        this.instanceExtension.drawArraysInstancedANGLE(mesh.mode, 0, mesh.length, meshInstances.length);
     }
 
     public createMesh(data: Float32Array, colour: number[])
     {
         const buffer = createMesh(this.gl, data);
-        const mesh = new WebGLMesh(buffer, this.gl.TRIANGLE_STRIP, data.length / 2, colour, 1);
-        return mesh;
+        return new WebGLMesh(buffer, this.gl.TRIANGLE_STRIP, data.length / 2, colour);
+    }
+
+    public createMeshInstance(data: Float32Array, colour: number[], numberOfInstances: number)
+    {
+        const mesh = this.createMesh(data, colour);
+        const offsetBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, offsetBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(numberOfInstances * 2), this.gl.DYNAMIC_DRAW);
+        return new WebGLMeshInstances(this.gl, mesh, offsetBuffer, numberOfInstances);
     }
 
     public setupRender()
@@ -83,6 +123,18 @@ export default class WebGLCanvas
         const { viewport } = this;
 
         mat4.ortho(this.cameraMatrix, viewport.minX, viewport.maxX, viewport.minY, viewport.maxY, 0.1, 50);
-        this.gl.uniformMatrix4fv(this.simpleShader.cameraUniform, false, this.cameraMatrix);
+    }
+
+    private changeToShader(shader: ShaderWrapper)
+    {
+        if (this.currentShader === shader)
+        {
+            return;
+        }
+
+        this.currentShader = shader;
+        this.gl.useProgram(shader.program);
+        this.gl.uniformMatrix4fv(shader.uniform.camera, false, this.cameraMatrix);
+        this.gl.uniformMatrix4fv(shader.uniform.view, false, this.viewMatrix);
     }
 }

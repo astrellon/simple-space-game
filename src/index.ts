@@ -17,11 +17,20 @@ const obj = new GameObject();
 obj.mesh = gameEngine.webgl.createMesh(meshData, [1, 0, 0, 1]);
 obj.setParent(gameEngine.root);
 
-for (let i = 0; i < 10; i++)
+const num = 100;
+const offsets = new Float32Array(num * 2);
+for (let i = 0; i < num; i++)
 {
-    const objChild = new Square(gameEngine, [0, 1, 0, 1], i / 10 * Math.PI * 2);
-    objChild.setParent(obj);
+    const a = i / num * Math.PI * 2;
+    offsets[i * 2] = Math.cos(a) * 5;
+    offsets[i * 2 + 1] = Math.sin(a) * 5;
+    // const objChild = new Square(gameEngine, [0, 1, 0, 1], i / num * Math.PI * 2);
+    // objChild.setParent(obj);
 }
+const objChild = new GameObject();
+objChild.mesh = gameEngine.webgl.createMeshInstance(meshData, [0.2, 1, 0.3, 1], num);
+objChild.mesh.setOffsets(offsets);
+objChild.setParent(obj);
 
 let angle = 0;
 

@@ -3,13 +3,14 @@ import { mat4 } from "gl-matrix";
 import WebGLMesh from "./webglMesh";
 import WebGLCanvas from "./webglCanvas";
 import GameEngine from "./gameEngine";
+import WebGLMeshInstances from "./webglMeshInstances";
 
 export default class GameObject
 {
     //public transform: mat4 = mat4.create();
     public parent?: GameObject;
     public children: GameObject[] = [];
-    public mesh: WebGLMesh;
+    public mesh: WebGLMesh | WebGLMeshInstances;
 
     public setParent(parent?: GameObject)
     {
@@ -45,7 +46,14 @@ export default class GameObject
             worldTransform = mat4.clone(transformStack[transformStack.length - 1]);
             mat4.multiply(worldTransform, worldTransform, this.mesh.transform);
 
-            webgl.drawMesh(this.mesh, worldTransform);
+            if (this.mesh instanceof WebGLMesh)
+            {
+                webgl.drawMesh(this.mesh, worldTransform);
+            }
+            else
+            {
+                webgl.drawMeshInstances(this.mesh, worldTransform);
+            }
         }
 
         transformStack.push(worldTransform);
